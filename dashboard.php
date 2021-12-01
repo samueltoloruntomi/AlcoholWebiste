@@ -1,3 +1,14 @@
+<?php
+// Initialize the session
+session_start();
+ 
+// Check if the user is logged in, if not then redirect him to login page
+if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
+    header("location: login.php");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +29,7 @@
     <a class="navbar-brand" href="homepage.html">TravisLiquor</a>
     <form class="form-inline my-1">
       <a href="order.html" class="btn btn-outline-success btn-sm my-0" type="submit">My Order</a>
-      <a href="homepage.html" class="btn btn-outline-danger btn-sm my-0" type="submit">Signout</a>
+      <a href="logout.php" class="btn btn-outline-danger btn-sm my-0" type="submit">Signout</a>
     </form>
   </nav>
 
