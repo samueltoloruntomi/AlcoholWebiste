@@ -1,98 +1,76 @@
 <?php 
   require_once "db_config/database.php";
-  $fullname = $email = $password = $dob = "";
-  $fullname_err = $email_err = $password_err = $dob_err = "";
+  
+  session_start();
 
-  if($_SERVER["REQUEST_METHOD"] == "POST") {
+  if(isset($_SESSION['user'])) {
+    header("location: dashboard.php");
+  }
 
-    // email validations
-    if(empty(trim($_POST["email"]))) {
-      $fullname_err = "Please enter your email address.";
+  if(isset($_REQUEST['register_Btn'])) {
+
+    $fullname = filter_var($_REQUEST['fullname'], FILTER_SANITIZE_STRING);
+    $email = filter_var( strtolower($_REQUEST['email']), FILTER_SANITIZE_EMAIL);
+    $password =strip_tags( $_REQUEST['password']);
+    $dob = $_REQUEST['dob'];
+    $phone = $_REQUEST['phone'];
+
+    if(empty($fullname)) {
+      $errorMsg[0][] = "Fullname required";
     }
-    else {
-      $sql = "SELECT id FROM users WHERE email = ?";
 
-      if($stmt = mysli_prepare($link, $sql)) {
-        // Bind variables
-        mysqli_stmt_bind_param($stmt, "s", $param_email);
+    if(empty($email)) {
+      $errorMsg[1][] = "Email required";
+    }
 
-        //set parameters
-        $param_email = trim($_POST["email"]);
-        // Execute the prepared statement
-        if(mysqli_stmt_execute($stmt)) {
-          // store result
-          mysqli_stmt_store_result($stmt);
-          if(mysqli_stmt_num_rows($stmt) == 1) {
-            $email_err = "This email is already in use";
-          }
-          else {
-            $email = trim($_POST["email"])
-          }
+    if(empty($dob)) {
+      $errorMsg[2][] = "Fullname required";
+    }
+
+    if(empty($phone)) {
+      $errorMsg[3][] = "Fullname required";
+    }
+
+    if(empty($password)) {
+      $errorMsg[4][] = "Password required";
+    }
+
+    if(strlen(password < 6)) {
+      $errorMsg[4][] = "Password must be atleast six";
+    }
+
+    if(empty($errorMsg)) {
+      try {
+        $select_stmt = $db->prepare("SELECT fullname, email FROM users WHERE email = :email");
+        $select_stmt->execute([':email' => $email]);
+        $row = $select_stmt->fetch(PDO::FETCH_ASSOC);
+
+        if(isset($row['email']) ==  $email) {
+          $errorMsg[1][] = "Email already exist";
         }
         else {
-          echo "Oops! Something went wrong. Please try again later."
+          $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+          $insert_stmt = $db->prepare("INSERT INTO users (fullname, email, password, phone, dob) VALUES (:fullname, :email, :password, :phone, :dob)");
+
+          if(
+            $insert_stmt->execute(
+              [
+                ":fullname" => $fullname,
+                ":email" => $email,
+                ":password" => $hashed_password,
+                ":phone" => $phone,
+                ":dob" => $dob
+              ]
+            )
+          ){
+            header("location: dashboard.php");
+          }
         }
-        // end statement
-        mysqli_stmt_close($stmt);
+      } catch (PDOException $e) {
+        $pdoError = $e->getMessage();
       }
     }
 
-    // fullname validation
-    if(empty(trim($_POST["fullname"]))) {
-      $fullname_err = "Please enter your fullname";
-    }
-    else {
-      $fullname = trim($_POST["fullname"]);
-    }
-
-    // DOB validation 
-    if(empty($_POST["dob"])) {
-      $dob_err = "Please enter your date of birth";
-    }
-    else {
-      $dob = $_POST["dob"];
-    }
-
-    // Password validation 
-    if(empty(trim($_POST["password"]))) {
-      $password_err = "Please enter your password";
-    }
-    elseif(strlen(trim($_POST["password"])) < 6) {
-      $password_err = "Password must be atlease 6";
-    }
-    else {
-      $password = trim($_POST["password"]);
-    }
-
-    // Check input errors before inserting in database
-    if(empty($fullname_err) && empty($password_err) && empty($dob_err) && empty($email_err)) {
-       // Prepare an insert statement
-       $sql = "INSERT INTO users (fullname, password, dob, email) VALUES (?, ?)";
-         
-       if($stmt = mysqli_prepare($link, $sql)){
-           // Bind variables to the prepared statement as parameters
-           mysqli_stmt_bind_param($stmt, "ss", $param_fullname, $param_password, $param_email, $param_dob);
-           
-           // Set parameters
-           $param_fullname = $fullname;
-           $param_email = $email;
-           $param_dob = $dob;
-           $param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
-           
-           // Attempt to execute the prepared statement
-           if(mysqli_stmt_execute($stmt)){
-               // Redirect to login page
-               header("location: login.php");
-           } else{
-               echo "Oops! Something went wrong. Please try again later.";
-           }
-
-           // Close statement
-           mysqli_stmt_close($stmt);
-       }
-    }
-     // Close connection
-     mysqli_close($link);
   }
 ?>
 
@@ -137,7 +115,7 @@
                 <div class="col-md-6 col-lg-7 d-flex align-items-center">
                   <div class="card-body p-4 p-lg-5 text-black">
     
-                    <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post">
+                    <form action="register.php" method="post">
     
                       <div class="d-flex align-items-center mb-3 pb-1">
                         <i class="fas fa-cubes fa-2x me-3" style="color: #ff6219;"></i>
@@ -148,34 +126,34 @@
 
                       <div class="form-outline mb-4">
                         <input type="text" id="form2Example17" name="fullname" class="form-control form-control-lg" 
-                        <?php echo (!empty($fullname_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $fullname; ?>" 
+                         
                         />
                         <label class="form-label" for="form2Example17">Fullnaame</label>
                       </div>
 
                       <div class="form-outline mb-4">
-                        <input type="date" id="form2Example17" name="dob" class="form-control form-control-lg" 
-                        <?php echo (!empty($dob_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $dob; ?>"
+                        <input type="date" id="form2Example17" name="dob" class="form-control form-control-lg"
+                       
                         />
                         
                       </div>
 
                       <div class="form-outline mb-4">
                         <input type="email" id="form2Example17"name="email" class="form-control form-control-lg" 
-                        <?php echo (!empty($email_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $email; ?>"
+                       
                         />
                         <label class="form-label" for="form2Example17">Email address</label>
                       </div>
     
                       <div class="form-outline mb-4">
                         <input type="password" id="form2Example27" name="password" class="form-control form-control-lg" 
-                        <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $password; ?>"
+                        
                         />
                         <label class="form-label" for="form2Example27">Password</label>
                       </div>
     
                       <div class="pt-1 mb-4">
-                        <button  class="btn btn-dark btn-lg btn-block" type="submit">Register</button>
+                        <button  class="btn btn-dark btn-lg btn-block" type="submit" name="'register_Btn">Register</button>
                       </div>
     
                       <a class="small text-muted" href="#!">Forgot password?</a>

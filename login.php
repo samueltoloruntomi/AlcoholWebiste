@@ -1,91 +1,59 @@
 <?php
+// Include config file
+require_once "db_config/database.php";
 // Initialize the session
 session_start();
  
 // Check if the user is already logged in, if yes then redirect him to welcome page
-if(isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true){
+if( isset($_SESSION["user"]) ){
     header("location: dashboard.php");
     exit;
 }
  
-// Include config file
-require_once "db_config/database.php";
- 
-// Define variables and initialize with empty values
-$email = $password = "";
-$email_err = $password_err = $login_err = "";
- 
-// Processing form data when form is submitted
-if($_SERVER["REQUEST_METHOD"] == "POST"){
- 
-    // Check if username is empty
-    if(empty(trim($_POST["email"]))){
-        $email_err = "Please enter your email.";
-    } else{
-        $email = trim($_POST["email"]);
-    }
-    
-    // Check if password is empty
-    if(empty(trim($_POST["password"]))){
-        $password_err = "Please enter your password.";
-    } else{
-        $password = trim($_POST["password"]);
-    }
-    
-    // Validate credentials
-    if(empty($email_err) && empty($password_err)){
-        // Prepare a select statement
-        $sql = "SELECT id, email, password FROM users WHERE email = ?";
-        
-        if($stmt = mysqli_prepare($link, $sql)){
-            // Bind variables to the prepared statement as parameters
-            mysqli_stmt_bind_param($stmt, "s", $param_email);
-            
-            // Set parameters
-            $param_email = $email;
-            
-            // Attempt to execute the prepared statement
-            if(mysqli_stmt_execute($stmt)){
-                // Store result
-                mysqli_stmt_store_result($stmt);
-                
-                // Check if email exists, if yes then verify password
-                if(mysqli_stmt_num_rows($stmt) == 1){                    
-                    // Bind result variables
-                    mysqli_stmt_bind_result($stmt, $id, $email, $hashed_password);
-                    if(mysqli_stmt_fetch($stmt)){
-                        if(password_verify($password, $hashed_password)){
-                            // Password is correct, so start a new session
-                            session_start();
-                            
-                            // Store data in session variables
-                            $_SESSION["loggedin"] = true;
-                            $_SESSION["id"] = $id;
-                            $_SESSION["email"] = $email;                            
-                            
-                            // Redirect user to welcome page
-                            header("location: dashboard.php");
-                        } else{
-                            // Password is not valid, display a generic error message
-                            $login_err = "Invalid email or password.";
-                        }
-                    }
-                } else{
-                    // email doesn't exist, display a generic error message
-                    $login_err = "Invalid email or password.";
-                }
-            } else{
-                echo "Oops! Something went wrong. Please try again later.";
-            }
+if(isset($_REQUEST["login_Btn"])) {
+  $email = filter_var( strtolower( $_REQUEST['email']), FILTER_SANITIZE_EMAIL);
+  $password =strip_tags( $_REQUEST['password']);
 
-            // Close statement
-            mysqli_stmt_close($stmt);
+  if(empty($email)) {
+    $errorMsg[] = "Must enter email";
+  }
+  elseif(empty($password)){
+    $errorMsg[] = "Must enter password";
+  }
+  else {
+    try {
+      //code...
+      $select_stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+      $select_stmt->execute([
+        ":email" => $email
+      ]);
+      $row = $select_stmt->fetch(PDO::FETCH_ASSOC);
+
+      if($select_stmt->rowCount() > 0) {
+        if(password_verify($password, $row["password"]) ) {
+          $_SESSION['user']['fullname'] = $row["fullname"];
+          $_SESSION['user']['email'] = $row["email"];
+          $_SESSION['user']['phone'] = $row["phone"];
+          $_SESSION['user']['dob'] = $row["dob"];
+          $_SESSION['user']['id'] = $row["id"];
+
+          header("location: dashboard.php");
         }
+        else {
+          $errorMsg[] = "Wrong password or email";
+        }
+      }
+      else {
+        $errorMsg[] = "Wrong password or email";
+      }
+    } catch (PDOException $e) {
+      //throw $th;
+      echo $e->getMessage();
     }
     
-    // Close connection
-    mysqli_close($link);
+  }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -126,8 +94,15 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                   </div>
                   <div class="col-md-6 col-lg-7 d-flex align-items-center">
                     <div class="card-body p-4 p-lg-5 text-black">
-      
-                      <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+                      <?php 
+                        if( isset($errorMsg) ) {
+                          foreach($errorMsg as $loginError) {
+                            echo "<p class='alert alert-danger'>".$errorMsg."</p>";
+                          }
+                          
+                        }
+                      ?>
+                      <form action="login.php" method="post">
       
                         <div class="d-flex align-items-center mb-3 pb-1">
                           <i class="fas fa-cubes fa-2x me-3" style="color: #ff6219;"></i>
@@ -142,19 +117,19 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                         ?>
 
                         <div class="form-outline mb-4">
-                          <input type="email" id="form2Example17" class="form-control form-control-lg"  <?php echo (!empty($email_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $email; ?>" />
+                          <input type="email" id="form2Example17" class="form-control form-control-lg"  />
                           <span class="invalid-feedback"><?php echo $email_err; ?></span>
                           <label class="form-label" for="form2Example17">Email address</label>
                         </div>
       
                         <div class="form-outline mb-4">
-                          <input type="password" id="form2Example27" class="form-control form-control-lg " <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>" />
+                          <input type="password" id="form2Example27" class="form-control form-control-lg "  />
                           <span class="invalid-feedback"><?php echo $password_err; ?></span>
                           <label class="form-label" for="form2Example27">Password</label>
                         </div>
       
                         <div class="pt-1 mb-4">
-                          <button  class="btn btn-dark btn-lg btn-block" type="submit">Login</button>
+                          <button name="login_Btn" class="btn btn-dark btn-lg btn-block" type="submit">Login</button>
                         </div>
       
                         <a class="small text-muted" href="#!">Forgot password?</a>
