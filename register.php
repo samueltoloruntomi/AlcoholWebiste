@@ -1,4 +1,5 @@
 <?php 
+
   require_once "db_config/database.php";
   $fullname = $email = $password = $dob = "";
   $fullname_err = $email_err = $password_err = $dob_err = "";
@@ -26,11 +27,11 @@
             $email_err = "This email is already in use";
           }
           else {
-            $email = trim($_POST["email"])
+            $email = trim($_POST["email"]);
           }
         }
         else {
-          echo "Oops! Something went wrong. Please try again later."
+          echo "Oops! Something went wrong. Please try again later.";
         }
         // end statement
         mysqli_stmt_close($stmt);
