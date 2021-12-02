@@ -9,10 +9,10 @@ if( isset($_SESSION["user"]) ){
     header("location: dashboard.php");
     exit;
 }
- 
-if(isset($_REQUEST["login_Btn"])) {
+
+if( isset($_REQUEST["login_Btn"]) ) {
   $email = filter_var( strtolower( $_REQUEST['email']), FILTER_SANITIZE_EMAIL);
-  $password =strip_tags( $_REQUEST['password']);
+  $password = strip_tags( $_REQUEST['password']);
 
   if(empty($email)) {
     $errorMsg[] = "Must enter email";
@@ -97,7 +97,7 @@ if(isset($_REQUEST["login_Btn"])) {
                       <?php 
                         if( isset($errorMsg) ) {
                           foreach($errorMsg as $loginError) {
-                            echo "<p class='alert alert-danger'>".$errorMsg."</p>";
+                            echo "<p class='alert alert-danger'>".$loginError."</p>";
                           }
                           
                         }
@@ -117,13 +117,13 @@ if(isset($_REQUEST["login_Btn"])) {
                         ?>
 
                         <div class="form-outline mb-4">
-                          <input type="email" id="form2Example17" class="form-control form-control-lg"  />
+                          <input name="email" type="email" id="form2Example17" class="form-control form-control-lg"  />
                           <span class="invalid-feedback"><?php echo $email_err; ?></span>
                           <label class="form-label" for="form2Example17">Email address</label>
                         </div>
       
                         <div class="form-outline mb-4">
-                          <input type="password" id="form2Example27" class="form-control form-control-lg "  />
+                          <input name="password" type="password" id="form2Example27" class="form-control form-control-lg "  />
                           <span class="invalid-feedback"><?php echo $password_err; ?></span>
                           <label class="form-label" for="form2Example27">Password</label>
                         </div>
