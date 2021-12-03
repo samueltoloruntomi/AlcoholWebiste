@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 <?php 
 
 // database parameters
@@ -15,4 +16,15 @@ try {
     echo $e->getMessage();
 }
 
+=======
+<?php
+    $servername='localhost';
+    $username='root';
+    $password='';
+    $dbname = "travis_liquor";
+    $conn=mysqli_connect($servername,$username,$password,"$dbname");
+      if(!$conn){
+          die('Could not Connect MySql Server:' .mysql_error());
+        }
+>>>>>>> 30c92c88c09341edc8f738ceb3b18e2a37e95cb7
 ?>
