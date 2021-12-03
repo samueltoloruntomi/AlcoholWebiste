@@ -1,18 +1,11 @@
 
-<?php 
-
-// database parameters
-$db_host = "Localhost:3307";
-$db_user = "root";
-$db_password = '';
-$db_name = "travis_liquor";
-
-try {
-    // try connect to database
-    $db = new PDO("mysql:host={$db_host};dbname={$db_name},$db_user,$db_password");
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOEXCEPTION $e) {
-    echo $e->getMessage();
-}
-
+<?php
+    $servername='localhost';
+    $username='root';
+    $password='';
+    $dbname = "travis_liquor";
+    $conn=mysqli_connect($servername,$username,$password,"$dbname");
+      if(!$conn){
+          die('Could not Connect MySql Server:' .mysql_error());
+        }
 ?>

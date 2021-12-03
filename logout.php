@@ -1,14 +1,14 @@
 <?php
-// Initialize the session
+ob_start();
 session_start();
- 
-// Unset all of the session variables
-$_SESSION = array();
- 
-// Destroy the session.
-session_destroy();
- 
-// Redirect to login page
-header("location: login.php");
-exit;
+if(isset($_SESSION['user'])) {
+	session_destroy();
+	unset($_SESSION['id']);
+	unset($_SESSION['fullname']);
+	unset($_SESSION['email']);
+	unset($_SESSION['phone']);
+	header("Location: login.php");
+} else {
+	header("Location: login.php");
+}
 ?>
